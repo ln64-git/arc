@@ -1,11 +1,18 @@
 mod types;
+pub mod utility {
+    pub mod encrypt;
+    pub mod manifest;
+}
+
 pub mod command {
     pub mod add;
     pub mod commit;
     pub mod init;
+    pub mod lock;
     pub mod log;
     pub mod pull;
     pub mod restore;
+    pub mod unlock;
 }
 
 use clap::{Parser, Subcommand};
@@ -25,6 +32,8 @@ enum Commands {
     Log,
     Restore,
     Pull { source: String },
+    Lock { file: Option<String> },
+    Unlock { target: Option<String> },
 }
 
 fn main() {
@@ -35,6 +44,8 @@ fn main() {
         Commands::Commit => command::commit::run(),
         Commands::Log => command::log::run(),
         Commands::Restore => command::restore::run(),
-        Commands::Pull { source } => command::pull::run(&source), 
+        Commands::Pull { source } => command::pull::run(&source),
+        Commands::Unlock { target } => command::unlock::run(target),
+        Commands::Lock { file } => command::lock::run(file.map(|s| s.to_string())),
     }
 }

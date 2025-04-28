@@ -1,4 +1,5 @@
 use crate::types::StagingEntry;
+use crate::utility::encrypt;
 use sha2::{Digest, Sha256};
 use std::fs::{self, File};
 use std::io::{Read, Write};
@@ -9,14 +10,17 @@ pub fn run(file_path: &str) {
     let mut contents = Vec::new();
     file.read_to_end(&mut contents).unwrap();
 
+    let cipher = encrypt::load_key(Path::new(".arc/secret.key"));
+    let encrypted = encrypt::encrypt(&cipher, &contents);
+
     let mut hasher = Sha256::new();
-    hasher.update(&contents);
+    hasher.update(&contents); // Still hash the plaintext
     let hash = hex::encode(hasher.finalize());
 
     let chunk_path = format!(".arc/state/chunks/{}", hash);
     if !Path::new(&chunk_path).exists() {
         let mut chunk_file = File::create(&chunk_path).unwrap();
-        chunk_file.write_all(&contents).unwrap();
+        chunk_file.write_all(&encrypted).unwrap();
     }
 
     println!("Added {} with hash {}", file_path, hash);

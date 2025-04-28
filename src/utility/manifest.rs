@@ -22,5 +22,6 @@ pub fn create_manifest(staging_dir: &Path) -> HistoryEntry {
     HistoryEntry {
         timestamp: chrono::Utc::now().to_rfc3339(),
         files,
+        snapshot_hash: String::new(), // Replace with appropriate hash logic if needed
     }
 }

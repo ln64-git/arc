@@ -1,4 +1,5 @@
 use crate::types::{FileEntry, HistoryEntry, StagingEntry};
+use crate::utility::encrypt;
 use sha2::{Digest, Sha256};
 use std::fs::{self, File};
 use std::io::Read;
@@ -44,13 +45,18 @@ pub fn run() {
     };
 
     let history_json = serde_json::to_string_pretty(&history_entry).unwrap();
+    let key = encrypt::load_key(Path::new(".arc/secret.key"));
+
     let history_path = format!(".arc/history/{}.json", history_entry.timestamp);
-    fs::write(history_path, history_json.clone()).unwrap();
+    encrypt::encrypt_to_file(&key, history_json.as_bytes(), Path::new(&history_path));
 
-    fs::write(".arc/history/latest.json", history_json).unwrap();
+    encrypt::encrypt_to_file(
+        &key,
+        history_json.as_bytes(),
+        Path::new(".arc/history/latest.json"),
+    );
 
-    // Clear staging
-    fs::remove_file(staging_path).unwrap();
+    fs::remove_file(".arc/state/staging.json").unwrap();
 
-    println!("Committed state.");
+    println!("Committed encrypted state.");
 }

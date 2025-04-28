@@ -1,5 +1,4 @@
-use ed25519_dalek::SigningKey;
-use rand::rngs::OsRng;
+use crate::utility::encrypt;
 use std::fs;
 use std::path::Path;
 
@@ -8,27 +7,23 @@ pub fn run() {
         println!(".arc already exists.");
         return;
     }
-    fs::create_dir(".arc").unwrap();
-    fs::create_dir(".arc/state").unwrap();
-    fs::create_dir(".arc/state/chunks").unwrap();
-    fs::create_dir(".arc/history").unwrap();
+    fs::create_dir_all(".arc/state/chunks").unwrap();
+    fs::create_dir_all(".arc/history").unwrap();
 
-    let mut csprng = OsRng;
-    let signing_key: SigningKey = SigningKey::generate(&mut csprng);
-    let verifying_key = signing_key.verifying_key();
+    encrypt::generate_key(Path::new(".arc/secret.key"));
 
-    let public_key_hex = hex::encode(verifying_key.to_bytes());
+    let key = encrypt::load_key(Path::new(".arc/secret.key"));
 
     let config = crate::types::Config {
         arc_version: "1.0".to_string(),
         archive_name: "MyArc".to_string(),
         description: "Local Arc MVP".to_string(),
         created_at: chrono::Utc::now().to_rfc3339(),
-        creator_public_key: public_key_hex,
+        creator_public_key: "SOME-FAKE-KEY-FOR-NOW".to_string(),
     };
 
     let config_json = serde_json::to_string_pretty(&config).unwrap();
-    fs::write(".arc/config.json", config_json).unwrap();
+    encrypt::encrypt_to_file(&key, config_json.as_bytes(), Path::new(".arc/config.json"));
 
-    println!("Initialized Arc.");
+    println!("Initialized Arc with encryption.");
 }
