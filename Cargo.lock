@@ -3,6 +3,22 @@
 version = 4
 
 [[package]]
+name = "Arc"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "chrono",
+ "clap",
+ "ed25519-dalek",
+ "hex",
+ "rand",
+ "serde",
+ "serde_json",
+ "sha2",
+ "walkdir",
+]
+
+[[package]]
 name = "android-tzdata"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -65,22 +81,6 @@ dependencies = [
  "anstyle",
  "once_cell",
  "windows-sys",
-]
-
-[[package]]
-name = "arc"
-version = "0.1.0"
-dependencies = [
- "base64",
- "chrono",
- "clap",
- "ed25519-dalek",
- "hex",
- "rand",
- "serde",
- "serde_json",
- "sha2",
- "walkdir",
 ]
 
 [[package]]

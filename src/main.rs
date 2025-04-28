@@ -10,7 +10,7 @@ pub mod command {
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "arc")]
+#[command(name = "Arc")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,

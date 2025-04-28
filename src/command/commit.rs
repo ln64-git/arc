@@ -5,7 +5,7 @@ use std::io::Read;
 pub fn run() {
     let mut state = Sha256::new();
 
-    for entry in fs::read_dir(".arc/state/chunks").unwrap() {
+    for entry in fs::read_dir(".Arc/state/chunks").unwrap() {
         let entry = entry.unwrap();
         let path = entry.path();
         if path.is_file() {
@@ -23,7 +23,7 @@ pub fn run() {
         snapshot_hash,
     };
 
-    let history_path = format!(".arc/history/{}.json", entry.timestamp);
+    let history_path = format!(".Arc/history/{}.json", entry.timestamp);
     let entry_json = serde_json::to_string_pretty(&entry).unwrap();
     fs::write(history_path, entry_json).unwrap();
 

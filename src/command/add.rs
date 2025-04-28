@@ -12,7 +12,7 @@ pub fn run(file_path: &str) {
     hasher.update(&contents);
     let hash = hex::encode(hasher.finalize());
 
-    let chunk_path = format!(".arc/state/chunks/{}", hash);
+    let chunk_path = format!(".Arc/state/chunks/{}", hash);
     if !Path::new(&chunk_path).exists() {
         let mut chunk_file = File::create(chunk_path).unwrap();
         chunk_file.write_all(&contents).unwrap();

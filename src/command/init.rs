@@ -21,8 +21,8 @@ pub fn run() {
 
     let config = crate::types::Config {
         arc_version: "1.0".to_string(),
-        archive_name: "MyARC".to_string(),
-        description: "Local ARC MVP".to_string(),
+        archive_name: "MyArc".to_string(),
+        description: "Local Arc MVP".to_string(),
         created_at: chrono::Utc::now().to_rfc3339(),
         creator_public_key: public_key_hex,
     };
@@ -30,5 +30,5 @@ pub fn run() {
     let config_json = serde_json::to_string_pretty(&config).unwrap();
     fs::write(".arc/config.json", config_json).unwrap();
 
-    println!("Initialized ARC.");
+    println!("Initialized Arc.");
 }
