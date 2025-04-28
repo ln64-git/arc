@@ -13,4 +13,17 @@ pub struct Config {
 pub struct HistoryEntry {
     pub timestamp: String,
     pub snapshot_hash: String,
+    pub files: Vec<FileEntry>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct FileEntry {
+    pub path: String,
+    pub hash: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct StagingEntry {
+    pub path: String,
+    pub hash: String,
 }

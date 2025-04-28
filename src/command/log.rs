@@ -1,7 +1,7 @@
 use std::fs;
 
 pub fn run() {
-    let entries = fs::read_dir(".Arc/history").unwrap();
+    let entries = fs::read_dir(".arc/history").unwrap();
     for entry in entries {
         let entry = entry.unwrap();
         let path = entry.path();

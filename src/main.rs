@@ -4,13 +4,14 @@ pub mod command {
     pub mod commit;
     pub mod init;
     pub mod log;
+    pub mod pull;
     pub mod restore;
 }
 
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "Arc")]
+#[command(name = "arc")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -23,6 +24,7 @@ enum Commands {
     Commit,
     Log,
     Restore,
+    Pull { source: String },
 }
 
 fn main() {
@@ -33,5 +35,6 @@ fn main() {
         Commands::Commit => command::commit::run(),
         Commands::Log => command::log::run(),
         Commands::Restore => command::restore::run(),
+        Commands::Pull { source } => command::pull::run(&source), 
     }
 }
