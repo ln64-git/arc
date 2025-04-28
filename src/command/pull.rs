@@ -7,108 +7,107 @@ use std::path::Path;
 pub fn run(source_arc_path: &str) {
     println!("🔄 Pulling from ARC at {}", source_arc_path);
 
-    let source_arc_dir = Path::new(source_arc_path).join(".arc");
-    let dest_arc_dir = Path::new(".arc");
+    let source_arc = Path::new(source_arc_path).join(".arc");
+    let dest_arc = Path::new(".arc");
 
-    // 🛡 Step 1: Auto-Initialize ARC Structure
-    initialize_local_arc_structure();
+    initialize_arc_structure();
 
-    // 🛡 Step 2: Copy secret.key if missing
-    let source_secret = source_arc_dir.join("secret.key");
-    let dest_secret = dest_arc_dir.join("secret.key");
+    copy_if_missing(
+        &source_arc.join("secret.key"),
+        &dest_arc.join("secret.key"),
+        "secret.key",
+    );
+    copy_if_missing(
+        &source_arc.join("config.json"),
+        &dest_arc.join("config.json"),
+        "config.json",
+    );
 
-    if !dest_secret.exists() && source_secret.exists() {
-        fs::copy(&source_secret, &dest_secret).expect("Failed to copy secret.key");
-        println!("✅ Copied secret.key");
-    }
-
-    // 🛡 Step 3: Load secret key
-    let key = encrypt::load_secret_key();
-
-    // 🛡 Step 4: Copy encrypted config.json (if exists)
-    let source_config = source_arc_dir.join("config.json");
-    let dest_config = dest_arc_dir.join("config.json");
-
-    if source_config.exists() {
-        fs::copy(&source_config, &dest_config).expect("Failed to copy config.json");
-        println!("✅ Copied encrypted config.json");
-    } else {
-        println!("⚠️ Warning: No config.json found in source ARC.");
-    }
-
-    // 🛡 Step 5: Decrypt and load manifest (latest.json)
-    let manifest_path = source_arc_dir.join("history/latest.json");
-
+    let manifest_path = source_arc.join("history/latest.json");
     if !manifest_path.exists() {
-        println!("⚠️ Warning: No latest.json manifest found. Nothing to pull.");
+        println!("⚠️ No latest.json found. Nothing to pull.");
         return;
     }
 
+    let key = encrypt::load_secret_key();
     let manifest_bytes = encrypt::decrypt_from_file(&key, &manifest_path);
-    let manifest: HistoryEntry =
-        serde_json::from_slice(&manifest_bytes).expect("Invalid manifest format");
+    let manifest: HistoryEntry = serde_json::from_slice(&manifest_bytes).expect("Invalid manifest");
 
-    // 🛡 Step 6: Pull Chunks and Restore Files
-    let source_chunks_path = source_arc_dir.join("state/chunks");
-    let dest_chunks_path = dest_arc_dir.join("state/chunks");
+    pull_chunks_and_restore_files(
+        &manifest,
+        &source_arc.join("state/chunks"),
+        &dest_arc.join("state/chunks"),
+        &key,
+    );
 
+    save_manifest_plaintext(&manifest);
+    println!("🎉 Pull complete.");
+}
+
+fn initialize_arc_structure() {
+    for dir in [".arc", ".arc/state/chunks", ".arc/history"] {
+        fs::create_dir_all(dir).expect(&format!("Failed to create {}", dir));
+    }
+    println!("🛠 Initialized ARC directory structure.");
+
+    // Secret Key Cleanup
+    let base_key = Path::new("secret.key");
+    if base_key.exists() {
+        println!("🧹 Detected duplicate secret.key in base folder. Removing redundant copy...");
+        fs::remove_file(base_key).expect("Failed to delete redundant secret.key in base dir");
+        println!("✅ Removed duplicate secret.key from base directory.");
+    }
+}
+
+fn copy_if_missing(src: &Path, dst: &Path, label: &str) {
+    if src.exists() && !dst.exists() {
+        fs::copy(src, dst).expect(&format!("Failed to copy {}", label));
+        println!("✅ Copied {}", label);
+    } else if !src.exists() {
+        println!("⚠️ Warning: {} not found in source ARC.", label);
+    }
+}
+
+fn pull_chunks_and_restore_files(
+    manifest: &HistoryEntry,
+    source_chunks: &Path,
+    dest_chunks: &Path,
+    key: &aes_gcm::Aes256Gcm,
+) {
     for file_entry in &manifest.files {
-        let chunk_filename = &file_entry.hash;
-        let source_chunk_path = source_chunks_path.join(chunk_filename);
-        let dest_chunk_path = dest_chunks_path.join(chunk_filename);
+        let chunk = &file_entry.hash;
+        let src_chunk = source_chunks.join(chunk);
+        let dst_chunk = dest_chunks.join(chunk);
 
-        if !dest_chunk_path.exists() {
-            match fs::copy(&source_chunk_path, &dest_chunk_path) {
-                Ok(_) => println!("✅ Fetched chunk {}", chunk_filename),
+        if !dst_chunk.exists() {
+            match fs::copy(&src_chunk, &dst_chunk) {
+                Ok(_) => println!("✅ Fetched chunk {}", chunk),
                 Err(e) => {
-                    println!("❌ Failed to fetch chunk {}: {}", chunk_filename, e);
+                    println!("❌ Failed to fetch chunk {}: {}", chunk, e);
                     continue;
                 }
             }
         } else {
-            println!("🗂️ Already have chunk {}", chunk_filename);
+            println!("🗂️ Already have chunk {}", chunk);
         }
 
-        let encrypted_chunk = fs::read(&dest_chunk_path).expect("Failed to read encrypted chunk");
-        let decrypted_contents = encrypt::decrypt(&key, &encrypted_chunk).unwrap();
+        let encrypted_chunk = fs::read(&dst_chunk).expect("Failed to read chunk");
+        let decrypted = encrypt::decrypt(key, &encrypted_chunk).expect("Failed to decrypt chunk");
 
-        let output_file_path = Path::new(&file_entry.path);
-        if let Some(parent) = output_file_path.parent() {
+        let output_path = Path::new(&file_entry.path);
+        if let Some(parent) = output_path.parent() {
             fs::create_dir_all(parent).unwrap();
         }
 
-        let mut output_file = fs::File::create(output_file_path).unwrap();
-        output_file.write_all(&decrypted_contents).unwrap();
-
-        println!("✅ Restored file {}", output_file_path.display());
+        let mut output = fs::File::create(output_path).unwrap();
+        output.write_all(&decrypted).unwrap();
+        println!("✅ Restored {}", output_path.display());
     }
-
-    // 🛡 Step 7: Save plaintext latest_manifest.json
-    let local_manifest_path = Path::new(".arc/state/latest_manifest.json");
-    let serialized_manifest =
-        serde_json::to_string_pretty(&manifest).expect("Failed to serialize manifest");
-    fs::write(&local_manifest_path, serialized_manifest).expect("Failed to save latest manifest");
-    println!("✅ Saved local manifest for future lock.");
-
-    println!("🎉 Pull complete.");
 }
 
-/// Helper to initialize .arc/ directory structure
-fn initialize_local_arc_structure() {
-    let arc_dir = Path::new(".arc");
-
-    if !arc_dir.exists() {
-        println!("🛠 No local .arc/ found. Initializing...");
-        fs::create_dir(".arc").expect("Failed to create .arc/");
-    }
-
-    let chunks_dir = arc_dir.join("state/chunks");
-    if !chunks_dir.exists() {
-        fs::create_dir_all(&chunks_dir).expect("Failed to create state/chunks/");
-    }
-
-    let history_dir = arc_dir.join("history");
-    if !history_dir.exists() {
-        fs::create_dir_all(&history_dir).expect("Failed to create history/");
-    }
+fn save_manifest_plaintext(manifest: &HistoryEntry) {
+    let manifest_path = Path::new(".arc/state/latest_manifest.json");
+    let serialized = serde_json::to_string_pretty(manifest).expect("Failed to serialize manifest");
+    fs::write(&manifest_path, serialized).expect("Failed to write local manifest");
+    println!("✅ Saved local plaintext manifest.");
 }
