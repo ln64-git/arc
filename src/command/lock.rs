@@ -1,125 +1,83 @@
 use crate::types::HistoryEntry;
 use crate::utility::encrypt;
+use aes_gcm::Aes256Gcm;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
-pub fn run(file: Option<String>) {
+pub fn run(target: Option<String>) {
+    println!("🔒 Locking ARC...");
+
     let cipher = encrypt::load_secret_key();
+    let manifest = load_manifest();
 
-    match file {
-        Some(filepath) => {
-            // 🛡 Single file lock
-            lock_file(filepath, &cipher);
-        }
-        _ => {
-            // 🛡 Full ARC lock
-            lock_all(&cipher);
-        }
+    let files = match target {
+        Some(ref path) => manifest
+            .files
+            .iter()
+            .filter(|entry| entry.path.starts_with(path))
+            .cloned()
+            .collect(),
+        _ => manifest.files,
+    };
+
+    if files.is_empty() {
+        println!("❌ No matching files to lock.");
+        return;
     }
+
+    for file_entry in files {
+        lock_file(&file_entry.path, &file_entry.hash, &cipher);
+    }
+
+    println!("🔒 Lock complete.");
 }
 
-fn lock_file(filepath: String, cipher: &aes_gcm::Aes256Gcm) {
-    let path = Path::new(&filepath);
+fn load_manifest() -> HistoryEntry {
+    let manifest_path = Path::new(".arc/state/latest_manifest.json");
+    let manifest_data = fs::read_to_string(manifest_path).expect("Failed to read manifest");
+    serde_json::from_str(&manifest_data).expect("Invalid manifest format")
+}
+
+fn lock_file(path_str: &str, hash: &str, cipher: &Aes256Gcm) {
+    let path = Path::new(path_str);
 
     if !path.exists() {
-        println!("File {} does not exist.", filepath);
+        println!("⚠️ Skipping missing file: {}", path.display());
         return;
     }
 
-    println!("🔒 Encrypting file {}...", filepath);
+    println!("🔒 Locking file: {}", path.display());
 
-    let plaintext = fs::read(&path).expect("Failed to read file for locking");
-    let encrypted = encrypt::encrypt(cipher, &plaintext);
+    let data = fs::read(&path).expect("Failed to read file");
+    let encrypted = encrypt::encrypt(cipher, &data);
 
-    fs::write(&path, encrypted).expect("Failed to encrypt file");
+    let chunk_path = Path::new(".arc/state/chunks").join(hash);
+    fs::create_dir_all(chunk_path.parent().unwrap()).unwrap();
+    fs::write(chunk_path, encrypted).expect("Failed to write encrypted chunk");
 
-    println!("🔒 File {} encrypted successfully.", filepath);
+    fs::remove_file(path).expect("Failed to remove original file");
+
+    cleanup_empty_dirs(path.parent());
 }
 
-fn lock_all(cipher: &aes_gcm::Aes256Gcm) {
-    println!("🔒 Locking entire ARC...");
-
-    let arc_dir = Path::new(".arc");
-
-    if !arc_dir.exists() {
-        println!("No .arc/ found. Nothing to lock.");
-        return;
-    }
-
-    let mut files_to_lock = Vec::new();
-
-    visit_dirs(arc_dir, &mut files_to_lock);
-
-    for file_path in files_to_lock {
-        if is_already_encrypted(&file_path) {
-            println!("Already encrypted: {}", file_path.display());
-            continue;
+fn cleanup_empty_dirs(mut dir: Option<&Path>) {
+    while let Some(path) = dir {
+        if path == Path::new(".") || path == Path::new("..") {
+            break;
         }
-
-        println!("Encrypting internal {}", file_path.display());
-
-        let plaintext = fs::read(&file_path).expect("Failed to read file for locking");
-        let encrypted = encrypt::encrypt(cipher, &plaintext);
-
-        fs::write(&file_path, encrypted).expect("Failed to overwrite file with encrypted data");
-    }
-
-    let manifest_path = Path::new(".arc/state/latest_manifest.json");
-
-    if manifest_path.exists() {
-        println!("Locking added project files...");
-
-        let manifest_bytes = encrypt::decrypt_from_file(cipher, manifest_path);
-        let manifest: HistoryEntry =
-            serde_json::from_slice(&manifest_bytes).expect("Invalid manifest");
-
-        for file_entry in manifest.files {
-            let file_path = Path::new(&file_entry.path);
-
-            if file_path.exists() {
-                println!("Encrypting added file {}", file_path.display());
-
-                let plaintext =
-                    fs::read(&file_path).expect("Failed to read added file for locking");
-                let encrypted = encrypt::encrypt(cipher, &plaintext);
-
-                fs::write(&file_path, encrypted).expect("Failed to encrypt added file");
-            } else {
-                println!("Warning: added file missing {}", file_path.display());
+        match fs::read_dir(path) {
+            Ok(mut entries) => {
+                if entries.next().is_none() {
+                    println!("🧹 Removing empty folder: {}", path.display());
+                    fs::remove_dir(path).unwrap_or_else(|e| {
+                        println!("⚠️ Failed to remove folder {}: {}", path.display(), e);
+                    });
+                } else {
+                    break; // Directory not empty
+                }
             }
+            _ => break, // Failed to read
         }
-    } else {
-        println!("Warning: No latest.json manifest found. Cannot lock added project files.");
+        dir = path.parent();
     }
-
-    println!("🔒 Full ARC lock complete.");
-}
-
-fn visit_dirs(dir: &Path, files: &mut Vec<PathBuf>) {
-    if dir.is_dir() {
-        for entry in fs::read_dir(dir).unwrap() {
-            let entry = entry.unwrap();
-            let path = entry.path();
-            if path.is_dir() {
-                visit_dirs(&path, files);
-            } else {
-                files.push(path);
-            }
-        }
-    }
-}
-
-fn is_already_encrypted(path: &Path) -> bool {
-    let path_str = path.to_string_lossy();
-    if path_str.contains(".arc/secret.key") || path_str.contains("secret.key") {
-        return true; // 🛡️ NEVER encrypt the secret key
-    }
-    if let Some(ext) = path.extension() {
-        if ext == "json" {
-            if path_str.contains("/history/") || path.ends_with("config.json") {
-                return true;
-            }
-        }
-    }
-    false
 }

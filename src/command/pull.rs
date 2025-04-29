@@ -13,45 +13,57 @@ pub fn run(source_arc_path: &str, optional_file: Option<String>) {
     let key = encrypt::load_secret_key();
     let manifest = load_and_decrypt_manifest(source_arc_path, &key);
 
-    match optional_file {
-        Some(file_path) => {
-            if file_path == "*" {
-                pull_all_files(&manifest, source_arc_path, &key);
-            } else {
-                pull_single_or_directory(&manifest, source_arc_path, &file_path, &key);
-            }
+    match optional_file.as_deref() {
+        Some(".") | Some("/") => {
+            pull_all_files(&manifest, source_arc_path, &key);
+        }
+        Some(path) => {
+            pull_smart(&manifest, source_arc_path, path, &key);
         }
         _ => {
             println!("📜 Available files in ARC:");
             display_manifest_summary(&manifest);
-            println!("⚡ Manual pull mode. Use `arc pull <source> <file>` to pull specific files.");
+            println!("⚡ Use `arc pull <source> <file or dir>` to pull.");
         }
     }
 
     println!("🎉 Pull complete.");
 }
 
-fn pull_single_or_directory(
+fn pull_smart(
     manifest: &HistoryEntry,
     source_arc_path: &str,
-    requested_path: &str,
+    path: &str,
     key: &aes_gcm::Aes256Gcm,
 ) {
-    // Match folder pull
-    let matched_files: Vec<&FileEntry> = manifest
+    let exact = manifest.files.iter().find(|f| f.path == path);
+    let recursive: Vec<&FileEntry> = manifest
         .files
         .iter()
-        .filter(|entry| entry.path.starts_with(requested_path))
+        .filter(|f| f.path.starts_with(path))
         .collect();
 
-    if matched_files.is_empty() {
-        eprintln!("❌ No matching files found for '{}'", requested_path);
-        return;
-    }
-
-    println!("🚚 Pulling {} matching files...", matched_files.len());
-    for file_entry in matched_files {
-        pull_and_restore_file(file_entry, source_arc_path, key);
+    match (exact, recursive.len()) {
+        (Some(file), _) => {
+            println!("🚚 Pulling file: {}", path);
+            pull_and_restore_file(file, source_arc_path, key);
+        }
+        (_, 0) => {
+            eprintln!("❌ No match found for '{}'", path);
+        }
+        (_, n) if n > 0 => {
+            println!(
+                "📁 Pulling directory `{}` with {} files",
+                path,
+                recursive.len()
+            );
+            for entry in recursive {
+                pull_and_restore_file(entry, source_arc_path, key);
+            }
+        }
+        _ => {
+            eprintln!("❌ Unknown pull state");
+        }
     }
 }
 

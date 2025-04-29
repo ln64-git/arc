@@ -17,7 +17,7 @@ pub struct HistoryEntry {
     pub files: Vec<FileEntry>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct FileEntry {
     pub path: String,
     pub hash: String,

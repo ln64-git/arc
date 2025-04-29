@@ -1,113 +1,60 @@
+use crate::types::HistoryEntry;
 use crate::utility::encrypt;
+use aes_gcm::Aes256Gcm;
 use std::fs;
-use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 pub fn run(target: Option<String>) {
     println!("🔓 Unlocking ARC...");
 
     let cipher = encrypt::load_secret_key();
+    let manifest = load_manifest();
 
-    match target {
-        Some(file_path) => {
-            unlock_single_file(&cipher, &file_path);
-        }
-        _ => {
-            unlock_entire_arc(&cipher);
-        }
+    let files = match target {
+        Some(ref path) => manifest
+            .files
+            .iter()
+            .filter(|entry| entry.path.starts_with(path))
+            .cloned()
+            .collect(),
+        _ => manifest.files,
+    };
+
+    if files.is_empty() {
+        println!("❌ No matching files to unlock.");
+        return;
+    }
+
+    for file_entry in files {
+        unlock_file(&file_entry.path, &file_entry.hash, &cipher);
     }
 
     println!("🎉 Unlock complete.");
 }
 
-fn unlock_single_file(cipher: &aes_gcm::Aes256Gcm, file_path: &str) {
-    let path = Path::new(file_path);
-
-    if !path.exists() {
-        println!("❌ File not found: {}", file_path);
-        return;
-    }
-
-    println!("🔍 Trying to unlock: {}", file_path); // 🧙 PRINT WHICH FILE FIRST
-
-    let encrypted = match fs::read(path) {
-        Ok(data) => data,
-        Err(_) => {
-            println!("❌ Failed to read file: {}", file_path);
-            return;
-        }
-    };
-
-    println!("🔎 Read {} bytes from {}", encrypted.len(), file_path);
-
-    if encrypted.len() < 12 {
-        println!(
-            "⚠️ File too small to be encrypted ({} bytes). Skipping: {}",
-            encrypted.len(),
-            file_path
-        );
-        return;
-    }
-
-    match encrypt::decrypt(cipher, &encrypted) {
-        Ok(decrypted) => {
-            let mut output = fs::File::create(path).expect("Failed to overwrite file");
-            output.write_all(&decrypted).unwrap();
-            println!("✅ Unlocked file {}", file_path);
-        }
-        Err(_) => {
-            println!(
-                "⚠️ Warning: Could not decrypt file: {}. Possibly already unlocked or corrupted.",
-                file_path
-            );
-        }
-    }
-}
-
-fn unlock_entire_arc(cipher: &aes_gcm::Aes256Gcm) {
-    let arc_dir = Path::new(".arc");
-
-    if !arc_dir.exists() {
-        println!("No .arc/ found. Nothing to unlock.");
-        return;
-    }
-
-    let mut files_to_unlock = Vec::new();
-    visit_dirs(arc_dir, &mut files_to_unlock);
-
-    for file_path in files_to_unlock {
-        unlock_single_file(cipher, file_path.to_str().unwrap());
-    }
-
-    // 🛡 Now unlock project files from manifest
+fn load_manifest() -> HistoryEntry {
     let manifest_path = Path::new(".arc/state/latest_manifest.json");
-
-    if manifest_path.exists() {
-        println!("🔎 Unlocking added project files...");
-
-        let manifest_contents = fs::read_to_string(manifest_path).expect("Failed to read manifest");
-        let manifest: crate::types::HistoryEntry =
-            serde_json::from_str(&manifest_contents).expect("Invalid manifest");
-
-        for file_entry in manifest.files {
-            println!("🔓 Trying to unlock project file: {}", file_entry.path);
-            unlock_single_file(cipher, &file_entry.path);
-        }
-    } else {
-        println!("⚠️ No manifest found. Skipping added project files unlock.");
-    }
+    let manifest_data = fs::read_to_string(manifest_path).expect("Failed to read manifest");
+    serde_json::from_str(&manifest_data).expect("Invalid manifest format")
 }
 
-fn visit_dirs(dir: &Path, files: &mut Vec<PathBuf>) {
-    if dir.is_dir() {
-        for entry in fs::read_dir(dir).unwrap() {
-            let entry = entry.unwrap();
-            let path = entry.path();
-            if path.is_dir() {
-                visit_dirs(&path, files);
-            } else {
-                files.push(path);
-            }
-        }
+fn unlock_file(path_str: &str, hash: &str, cipher: &Aes256Gcm) {
+    let chunk_path = Path::new(".arc/state/chunks").join(hash);
+
+    if !chunk_path.exists() {
+        println!("⚠️ Missing chunk for: {}", path_str);
+        return;
     }
+
+    println!("🔓 Unlocking file: {}", path_str);
+
+    let encrypted = fs::read(&chunk_path).expect("Failed to read encrypted chunk");
+    let decrypted = encrypt::decrypt(cipher, &encrypted).expect("Failed to decrypt");
+
+    let output_path = Path::new(path_str);
+    if let Some(parent) = output_path.parent() {
+        fs::create_dir_all(parent).unwrap();
+    }
+
+    fs::write(output_path, decrypted).expect("Failed to restore file");
 }
