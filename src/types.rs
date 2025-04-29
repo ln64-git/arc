@@ -7,6 +7,9 @@ pub struct Config {
     pub description: String,
     pub created_at: String,
     pub creator_public_key: String,
+    pub auto_pull_chunks: bool,
+    pub auto_decrypt_files: bool,
+    pub export_secret_key: bool,
 }
 
 #[derive(Serialize, Deserialize)]
