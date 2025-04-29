@@ -11,27 +11,48 @@ pub fn run(source_arc_path: &str, optional_file: Option<String>) {
     copy_secret_key_and_config(source_arc_path);
 
     let key = encrypt::load_secret_key();
-    let config = load_and_parse_config();
     let manifest = load_and_decrypt_manifest(source_arc_path, &key);
 
     match optional_file {
         Some(file_path) => {
-            pull_single_file(&manifest, source_arc_path, &file_path, &key);
-        }
-        _ => {
-            if config.auto_pull_chunks {
+            if file_path == "*" {
                 pull_all_files(&manifest, source_arc_path, &key);
             } else {
-                println!("📜 Available files in ARC:");
-                display_manifest_summary(&manifest);
-                println!(
-                    "⚡ Manual pull mode. Use `arc pull <source> <file>` to pull specific files."
-                );
+                pull_single_or_directory(&manifest, source_arc_path, &file_path, &key);
             }
+        }
+        _ => {
+            println!("📜 Available files in ARC:");
+            display_manifest_summary(&manifest);
+            println!("⚡ Manual pull mode. Use `arc pull <source> <file>` to pull specific files.");
         }
     }
 
     println!("🎉 Pull complete.");
+}
+
+fn pull_single_or_directory(
+    manifest: &HistoryEntry,
+    source_arc_path: &str,
+    requested_path: &str,
+    key: &aes_gcm::Aes256Gcm,
+) {
+    // Match folder pull
+    let matched_files: Vec<&FileEntry> = manifest
+        .files
+        .iter()
+        .filter(|entry| entry.path.starts_with(requested_path))
+        .collect();
+
+    if matched_files.is_empty() {
+        eprintln!("❌ No matching files found for '{}'", requested_path);
+        return;
+    }
+
+    println!("🚚 Pulling {} matching files...", matched_files.len());
+    for file_entry in matched_files {
+        pull_and_restore_file(file_entry, source_arc_path, key);
+    }
 }
 
 fn initialize_local_arc_structure_if_needed() {
@@ -81,12 +102,6 @@ fn copy_if_missing(src: &Path, dst: &Path, label: &str) {
     }
 }
 
-fn load_and_parse_config() -> Config {
-    let config_path = Path::new(".arc/config.json");
-    let config_data = fs::read_to_string(&config_path).expect("Failed to read config.json");
-    serde_json::from_str(&config_data).expect("Invalid config.json format")
-}
-
 fn load_and_decrypt_manifest(source_arc_path: &str, key: &aes_gcm::Aes256Gcm) -> HistoryEntry {
     let manifest_path = Path::new(source_arc_path).join(".arc/history/latest.json");
     let manifest_bytes = encrypt::decrypt_from_file(key, &manifest_path);
@@ -111,27 +126,6 @@ fn pull_all_files(manifest: &HistoryEntry, source_arc_path: &str, key: &aes_gcm:
     println!("🚚 Pulling all files...");
     for file_entry in &manifest.files {
         pull_and_restore_file(file_entry, source_arc_path, key);
-    }
-}
-
-fn pull_single_file(
-    manifest: &HistoryEntry,
-    source_arc_path: &str,
-    requested_path: &str,
-    key: &aes_gcm::Aes256Gcm,
-) {
-    match manifest
-        .files
-        .iter()
-        .find(|entry| entry.path == requested_path)
-    {
-        Some(file_entry) => {
-            println!("🚚 Pulling specific file: {}", requested_path);
-            pull_and_restore_file(file_entry, source_arc_path, key);
-        }
-        _ => {
-            eprintln!("❌ File '{}' not found in manifest!", requested_path);
-        }
     }
 }
 

@@ -22,8 +22,6 @@ pub fn run() {
         description: "Local Arc MVP".to_string(),
         created_at: chrono::Utc::now().to_rfc3339(),
         creator_public_key: "SOME-FAKE-KEY-FOR-NOW".to_string(),
-        auto_pull_chunks: true,
-        auto_decrypt_files: true,
         export_secret_key: true,
     };
 

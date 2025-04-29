@@ -2,8 +2,7 @@ use crate::types::HistoryEntry;
 use std::fs;
 use std::path::Path;
 
-/// Lists all files in the ARC manifest.
-pub fn run() {
+pub fn run(full: bool) {
     let manifest_path = Path::new(".arc/state/latest_manifest.json");
 
     if !manifest_path.exists() {
@@ -12,24 +11,19 @@ pub fn run() {
         return;
     }
 
-    let manifest_contents = match fs::read_to_string(&manifest_path) {
-        Ok(contents) => contents,
-        Err(e) => {
-            eprintln!("❌ Failed to read manifest: {}", e);
-            return;
-        }
-    };
+    let manifest_data =
+        fs::read_to_string(manifest_path).expect("❌ Failed to read local manifest");
 
-    let manifest: HistoryEntry = match serde_json::from_str(&manifest_contents) {
-        Ok(manifest) => manifest,
-        Err(e) => {
-            eprintln!("❌ Invalid manifest format: {}", e);
-            return;
-        }
-    };
+    let manifest: HistoryEntry =
+        serde_json::from_str(&manifest_data).expect("❌ Manifest JSON invalid");
 
     println!("📜 Files in ARC:");
+
     for file in manifest.files {
-        println!("📄 {}", file.path);
+        if full {
+            println!(" — 📄 {}  —  hash: {}", file.path, file.hash);
+        } else {
+            println!(" — 📄 {}", file.path);
+        }
     }
 }

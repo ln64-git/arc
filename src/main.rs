@@ -32,7 +32,10 @@ enum Commands {
     },
     Commit,
     Log,
-    List,
+    List {
+        #[arg(long)]
+        full: bool,
+    },
     Restore,
     Pull {
         source: String,
@@ -53,7 +56,7 @@ fn main() {
         Commands::Add { file } => command::add::run(&file),
         Commands::Commit => command::commit::run(),
         Commands::Log => command::log::run(),
-        Commands::List => command::list::run(),
+        Commands::List { full } => command::list::run(full),
         Commands::Restore => command::restore::run(),
         Commands::Pull { source, file } => command::pull::run(&source, file),
         Commands::Unlock { target } => command::unlock::run(target),
