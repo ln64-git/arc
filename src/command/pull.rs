@@ -107,6 +107,9 @@ fn copy_secret_key_and_config(source_arc_path: &str) {
 
 fn copy_if_missing(src: &Path, dst: &Path, label: &str) {
     if src.exists() && !dst.exists() {
+        if let Some(parent) = dst.parent() {
+            fs::create_dir_all(parent).unwrap();
+        }
         match fs::copy(src, dst) {
             Ok(_) => println!("✅ Copied {}", label),
             Err(e) => eprintln!("❌ Failed to copy {}: {}", label, e),
