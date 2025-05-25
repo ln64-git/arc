@@ -1,7 +1,7 @@
 ## What is Arc?
 
 **Arc** is a decentralized, versioned, cryptographically-verifiable **archive system** —
-designed to help people, communities, and institutions **preserve knowledge securely across devices**.
+designed to help people, communities, and institutions **preserve data securely across devices**.
 
 Arc offers:
 
