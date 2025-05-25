@@ -126,4 +126,3 @@ It’s a long-term layer for **trust, memory, and resilience**.
 ## License
 
 [MIT License](LICENSE)
-Arc is free and open because digital memory should never be locked behind walls.
