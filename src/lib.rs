@@ -1,6 +1,7 @@
 pub mod types;
 pub mod utility {
     pub mod encrypt;
+    pub mod setup_fake_arc;
 }
 pub mod command {
     pub mod add;

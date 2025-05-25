@@ -14,7 +14,7 @@ pub fn generate_key(path: &Path) {
 }
 
 pub fn load_key(path: &Path) -> Aes256Gcm {
-    let key_bytes = fs::read(path).expect("Failed to read encryption key");
+    let key_bytes = fs::read(path).expect(&format!("❌ Failed to read key at {:?}", path));
     let key = Key::<Aes256Gcm>::from_slice(&key_bytes);
     Aes256Gcm::new(key)
 }
@@ -58,9 +58,18 @@ pub fn decrypt(cipher: &Aes256Gcm, data: &[u8]) -> Result<Vec<u8>, ()> {
     cipher.decrypt(nonce, ciphertext).map_err(|_| ())
 }
 
-pub fn encrypt_to_file(cipher: &Aes256Gcm, data: &[u8], output_path: &Path) {
-    let encrypted = encrypt(cipher, data);
-    fs::write(output_path, encrypted).expect("Failed to write encrypted file");
+pub fn encrypt_to_file(key: &Aes256Gcm, plaintext: &[u8], path: &Path) {
+    if let Some(parent) = path.parent() {
+        // ⚠️ If parent exists as a file, remove it before mkdir
+        if parent.exists() && !parent.is_dir() {
+            fs::remove_file(parent).expect("❌ Failed to remove conflicting file");
+        }
+
+        fs::create_dir_all(parent).expect("❌ Failed to create parent dirs");
+    }
+
+    let encrypted = encrypt(key, plaintext);
+    fs::write(path, encrypted).expect("❌ Failed to write encrypted file");
 }
 
 pub fn decrypt_from_file(cipher: &Aes256Gcm, input_path: &Path) -> Vec<u8> {

@@ -1,126 +1,129 @@
-
-
 ## What is Arc?
 
-Arc is a decentralized, versioned, cryptographically-verifiable Archive protocol —  
-designed to preserve human knowledge, memory, and identity across collapse.
+**Arc** is a decentralized, versioned, cryptographically-verifiable **archive system** —
+designed to help people, communities, and institutions **preserve knowledge securely**, **across time and devices**.
 
-It’s **local-first**, **peer-to-peer**, **source-agnostic**, and **modular**.  
-It lets individuals, families, communities, and institutions build living Archives — portable across devices, networks, generations.
+Arc offers:
 
-Arc is:
+* **Local-first design** — your data lives with you, not the cloud
+* **Source-agnostic transport** — share over LAN, mesh, USB, internet, or any medium
+* **Peer-to-peer sync** — no servers, no platforms, no lock-in
+* **End-to-end encryption** — your data stays private, protected at every step
 
-- **Git** — but for memory, not just code.  
-- **Internet Archive** — but living on your machines, not a single server.  
-- **BitTorrent** — but purpose-built for trust, history, and truth.
+Think:
 
-Arc is a foundation.  
-A new standard for sovereign digital preservation.  
-The infrastructure for human memory in a post-trust, post-AI world.
+* **Git** — for personal and shared memory
+* **Internet Archive** — running on your own hardware
+* **BitTorrent** — optimized for integrity and version history
+
+Arc aims to provide a practical foundation for secure digital preservation and knowledge sharing.
 
 ---
 
 ## Why Arc?
 
-Because the old internet is dying:
+Because today's digital infrastructure is built on borrowed trust:
 
-- AI is poisoning public knowledge.  
-- Centralized clouds are collapsing or censoring.  
-- Institutions are losing legitimacy.  
-- Digital identities are being rented, not owned.  
-- Public memory is rotting, overwritten silently by systems no one controls.
+* Cloud platforms censor, vanish, or lock users out
+* Identity is fragmented across platforms
+* Knowledge is siloed, unverifiable, or easily overwritten
+* AI and automation are eroding provenance and authorship
+* Most systems depend on continuous internet and fragile APIs
 
-You cannot save knowledge by yelling at broken systems.  
-You have to **build new ones.**
-
-Arc is that new system — rooted, resilient, real.
+Arc answers with **sovereignty, transparency, and resilience** —
+letting individuals and institutions build secure, auditable, portable archives.
 
 ---
 
 ## What Arc Solves
 
-| Problem | Arc’s Answer |
-|:---|:---|
-| **Loss of Data Sovereignty** | Local-first Archives you own fully. |
-| **Collapse of Institutional Trust** | Verifiable memory without middlemen or authorities. |
-| **AI-Driven Data Poisoning** | Signed, versioned truth immune to hallucination. |
-| **Centralized Cloud Fragility** | Portable, peer-distributed Archives. |
-| **Network Fragility** | Source-agnostic transmission over Wi-Fi, LAN, mesh, drives, radios, or satellites. |
-| **Loss of Personal Identity** | Your cryptographic identity signs your memory — not corporations. |
+| Challenge                       | Arc’s Solution                                              |
+| :------------------------------ | :---------------------------------------------------------- |
+| **Data Sovereignty**            | Local-first Archives you fully control                      |
+| **Loss of Institutional Trust** | Verifiable memory with no centralized authorities           |
+| **AI-Era Data Drift**           | Signed, versioned snapshots resistant to hallucination      |
+| **Cloud Dependency**            | Portable Archives, shareable peer-to-peer over any medium   |
+| **Network Fragility**           | Sync over LAN, USB, satellite, mesh — not dependent on ISPs |
+| **Identity Ownership**          | Cryptographic signing rooted in your own keys               |
 
 ---
 
-## Big Vision — Grounded Execution
+## Arc Phases — From Personal to Global
 
-Arc is built to operate at every scale:
+| Phase               | What It Enables                                            |
+| :------------------ | :--------------------------------------------------------- |
+| **Phase 1: Local**  | Private, offline Archives with versioning and audit trails |
+| **Phase 2: P2P**    | Sync and share with trusted peers — no servers needed      |
+| **Phase 3: Arcnet** | Distributed, federated networks of shared knowledge        |
 
-| Scale | Example |
-|:---|:---|
-| **Personal** | A private family Archive with generations of history, photos, and videos. |
-| **Community** | A city-wide Archive preserving local music, art, and public records across a mesh network. |
-| **Institutional** | A decentralized university Archive for reseArch papers and cultural heritage. |
-| **Post-collapse** | Survivor groups syncing Archives over local Wi-Fi and hard drives when the internet fails. |
-| **Global** | Interconnected trusted Archives preserving truth across continents without reliance on any single nation, ISP, or corporation. |
+Each stage builds toward open, decentralized knowledge infrastructure.
 
-Arc is small enough for one person to run.  
-Strong enough for a civilization to rebuild on.
+---
+
+## Built for Every Scale
+
+| Use Case          | Example                                                                |
+| :---------------- | :--------------------------------------------------------------------- |
+| **Personal**      | Family archive with photos, journals, and documents                    |
+| **Community**     | Mesh-synced cultural records for local events and history              |
+| **Institutional** | University archives preserving research with cryptographic trust       |
+| **Portable**      | USB or offline-first knowledge kits for education, research, field ops |
+| **Global**        | Interoperable truth-sharing across borders, without gatekeepers        |
 
 ---
 
 ## How Arc Works
 
-```plaintext
-Arc init    # Create a sovereign Archive
-Arc add     # Add files (documents, videos, knowledge, anything)
-Arc commit  # Save and sign a cryptographic version
-Arc sync    # Push to trusted peers (any medium)
-Arc pull    # Fetch and verify updates
-Arc verify  # Audit and protect Archive integrity
+```bash
+arc init       # Start a new Archive
+arc add        # Add files (any type: text, media, records)
+arc commit     # Save and cryptographically sign a version
+arc pull       # Sync from a peer, drive, or source path
+arc lock       # Encrypt and hide files from view
+arc unlock     # Restore content securely from Archive
+arc verify     # Audit Archive integrity and authenticity
 ```
 
----
-
-## Source-Agnostic Resilience
-
-Arc moves across:
-
-- Wi-Fi LANs  
-- City-wide Mesh Networks  
-- ISP internet connections  
-- Sneakernet (flash drives, hard drives)  
-- Radio relays  
-- Satellite links  
-- Future networks not yet imagined
-
-If data can move, Arc survives.
+Arc stores everything using content-addressed chunks, encrypted on disk, tracked via signed manifests.
 
 ---
 
-## Future-Proof Humanity
+## Source-Agnostic Sync
 
-Arc isn’t just about backup.  
-It’s about **memory ecosystems** for a world where trust has collapsed.
+Arc transmits over:
 
-Arc lays the groundwork for:
+* Local Wi-Fi and LAN
+* USB and external drives
+* Internet or VPN tunnels
+* Satellite and radio systems
+* Future mediums not yet invented
 
-- **Private AI models** trained on your own verified Archives — not poisoned cloud junk, powered by your own sovereign data, safely and cleanly.  
-- **Community resilience** — decentralized libraries, public records, cultural Archives.  
-- **Post-state knowledge networks** — cities, families, and movements carrying their truth, independently.
+If data can move, Arc can sync it.
 
-In the world that’s coming, Arc isn’t just an improvement.  
-It’s **the only sane option left.**
+---
+
+## Designed for the Long Run
+
+Arc is a tool for:
+
+* **Secure private data management** — your archive, your key
+* **Community knowledge sharing** — sync and verify locally
+* **Long-term digital preservation** — no dependency on platform uptime
+* **Interoperable memory** — with open formats, portable history
+* **Trustworthy AI** — training on self-signed, auditable datasets
+
+Arc is more than a backup.
+It’s a long-term layer for **trust, memory, and resilience**.
 
 ---
 
 ## Built With
 
-- **Rust** — because Arc has to be fast, secure, and ready for the long collapse.
+* **Rust** — for speed, safety, and reliability across platforms
 
 ---
 
 ## License
 
 [MIT License](LICENSE)
-
-Arc is free because knowledge should not be rented.
-
+Arc is free and open because digital memory should never be locked behind walls.

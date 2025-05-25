@@ -33,6 +33,8 @@ fn test_lock_encrypts_and_removes_original() {
     )
     .unwrap();
 
+    // Ensure the chunks directory exists before running the lock command
+    fs::create_dir_all(".arc/state/chunks").unwrap();
     lock::run(None);
 
     assert!(!file_path.exists(), "Original file still exists after lock");

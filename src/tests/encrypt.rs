@@ -41,6 +41,5 @@ fn test_encrypt_to_file_and_decrypt_from_file() {
     encrypt::encrypt_to_file(&cipher, data, &output_path);
 
     let decrypted = encrypt::decrypt_from_file(&cipher, &output_path);
-
     assert_eq!(data.to_vec(), decrypted);
 }
