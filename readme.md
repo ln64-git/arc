@@ -55,7 +55,31 @@ What changes isn't the system—it's the topology.
 
 ---
 
-## Edge Cases That Define the Architecture
+## Examples That Define this Architecture
+
+**Local Art Collective** 
+
+- Artists sharing Dropbox got expensive, Google Drive keeps compressing everything
+- Shared folder of music, posters, art, lost-media
+- Sync at studio hangs or over home internet—no monthly subscription
+- Version history means you can recover that iteration from three weeks ago
+- The archive belongs to the group, not a platform that might change terms or shut down
+
+**Media Server Owners**
+
+- You built a home media library—movies, music, photos, personal recordings
+- Streaming services remove content, cloud storage has monthly fees
+- Your server works great until a drive fails and years of collecting disappears
+- Arc syncs your library to other nodes: friend's place, family member, off-site backup
+- If one copy goes down, the others keep everything intact
+- Your collection, your terms, backed up without subscription costs
+
+**Generational Preservation**
+
+- Family archives meant to last 50+ years
+- Current cloud providers won't exist in 20 years
+- Key recovery through trusted family members (3-of-5 to recover)
+- The archive outlives any individual, any company, any platform
 
 **Journalist Network**
 
@@ -77,20 +101,6 @@ What changes isn't the system—it's the topology.
 - Data stays on controlled hardware, never touches third-party infrastructure
 - Cryptographic proof of integrity—detect tampering immediately
 - Access control through key distribution, not account permissions
-
-**Intelligence Operations**
-
-- Assets in denied environments need to exfiltrate material
-- Traditional channels compromised or monitored
-- Arc archives travel through any medium: diplomatic pouch, tourist's laptop, satellite uplink
-- Receiving station verifies integrity, chain of custody cryptographically proven
-
-**Generational Preservation**
-
-- Family archives meant to last 50+ years
-- Current cloud providers won't exist in 20 years
-- Key recovery through trusted family members (3-of-5 to recover)
-- The archive outlives any individual, any company, any platform
 
 ---
 
